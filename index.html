@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>ХИП — карточная игра</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Cinzel:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+
+    <!-- Экран авторизации -->
+    <div id="authScreen" class="screen auth-screen">
+        <div class="auth-card">
+            <div class="auth-hero">
+                <div class="auth-logo">🃏</div>
+                <h1 class="auth-title">ХИП</h1>
+                <p class="auth-subtitle">Карточная игра для своих</p>
+            </div>
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login" onclick="switchAuthTab('login')">Вход</button>
+                <button class="auth-tab" data-tab="register" onclick="switchAuthTab('register')">Регистрация</button>
+            </div>
+            <div id="authForms">
+                <div id="loginPanel" class="auth-panel active">
+                    <div class="field">
+                        <input type="text" id="loginUsername" placeholder=" " autocomplete="username">
+                        <label>Имя</label>
+                    </div>
+                    <div class="field">
+                        <input type="password" id="loginPassword" placeholder=" " autocomplete="current-password">
+                        <label>Пароль</label>
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="login()">Войти</button>
+                </div>
+                <div id="registerPanel" class="auth-panel">
+                    <div class="field">
+                        <input type="text" id="regUsername" placeholder=" " autocomplete="username">
+                        <label>Имя</label>
+                    </div>
+                    <div class="field">
+                        <input type="password" id="regPassword" placeholder=" " autocomplete="new-password">
+                        <label>Пароль</label>
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="register()">Создать профиль</button>
+                </div>
+            </div>
+            <div class="auth-error" id="authError"></div>
+            <div id="roomActions" style="display: none; margin-top: 20px;">
+                <div class="profile-card" id="profileInfo"></div>
+                <div class="achievements-bar" id="achievementsBar"></div>
+                <button class="btn btn-secondary btn-block" onclick="showScreen('createRoomScreen')">Создать комнату</button>
+                <button class="btn btn-secondary btn-block" onclick="showScreen('joinRoomScreen')">Присоединиться</button>
+                <button class="btn btn-ghost btn-block" onclick="showRating()">🏆 Рейтинг</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран создания комнаты -->
+    <div id="createRoomScreen" class="screen center-screen" style="display: none;">
+        <div class="panel-card">
+            <h2>Создание комнаты</h2>
+            <div class="field">
+                <input type="number" id="stakeInput" value="10" min="10" placeholder=" ">
+                <label>Ставка (мин. 10)</label>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="createRoom()">Создать</button>
+            <button class="btn btn-ghost btn-block" onclick="showScreen('authScreen')">Назад</button>
+        </div>
+    </div>
+
+    <!-- Экран присоединения -->
+    <div id="joinRoomScreen" class="screen center-screen" style="display: none;">
+        <div class="panel-card">
+            <h2>Присоединение</h2>
+            <div class="field">
+                <input type="text" id="roomId" placeholder=" " maxlength="6">
+                <label>Код комнаты</label>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="joinRoom()">Присоединиться</button>
+            <button class="btn btn-ghost btn-block" onclick="showScreen('authScreen')">Назад</button>
+        </div>
+    </div>
+
+    <!-- Экран лобби -->
+    <div id="lobbyScreen" class="screen center-screen" style="display: none;">
+        <div class="panel-card">
+            <h2>Комната: <span class="room-code" id="roomCode"></span></h2>
+            <div class="players-list" id="playersList"></div>
+            <button class="btn btn-primary btn-block" id="startGameBtn" onclick="startGame()" style="display: none;">Начать игру!</button>
+            <button class="btn btn-secondary btn-block" onclick="addBot()">🤖 Добавить бота</button>
+            <button class="btn btn-ghost btn-block" onclick="leaveRoom()">Покинуть комнату</button>
+        </div>
+    </div>
+
+    <!-- Экран игры -->
+    <div id="gameScreen" class="screen game-screen" style="display: none;">
+        <div class="felt-table">
+            <div class="trump-badge" id="trumpCard"></div>
+            <div class="deck-badge" id="deckCount"></div>
+            <div class="bank-badge" id="bankDisplay"></div>
+
+            <div class="timer-ring" id="timerRing" style="display: none;">
+                <svg viewBox="0 0 52 52">
+                    <circle class="timer-ring-bg" cx="26" cy="26" r="26"></circle>
+                    <circle class="timer-ring-progress" id="timerRingProgress" cx="26" cy="26" r="26"></circle>
+                </svg>
+                <div id="timerRingText">40</div>
+            </div>
+
+            <div class="last-played" id="lastPlayed"></div>
+            <div class="history-panel" id="history"></div>
+            <div class="players-info" id="playersInfo"></div>
+            <div class="played-card-slot">
+                <div id="playedCardVisual"></div>
+            </div>
+            <div class="turn-indicator" id="turnIndicator"></div>
+        </div>
+
+        <div class="my-cards" id="myCards"></div>
+
+        <div id="actionButtons">
+            <button class="btn btn-take" id="takeButton" style="display: none;" onclick="takeCard()">Забрать</button>
+            <button class="btn btn-hip" id="hipButton" onclick="callHip()">ХИП! 🎯</button>
+        </div>
+
+        <button class="btn btn-ghost leave-btn" onclick="leaveRoom()">Выйти</button>
+
+        <div class="chat-panel">
+            <div class="chat-messages" id="messages"></div>
+            <div class="chat-input-row">
+                <input type="text" id="messageInput" placeholder="Сообщение...">
+                <button class="btn-icon" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+
+        <div class="modal-panel" id="guessPanel" style="display: none;">
+            <div id="guessContainer"></div>
+        </div>
+
+        <div class="modal-panel" id="guessResults" style="display: none;"></div>
+
+        <div class="restart-status" id="restartStatus" style="display: none;"></div>
+    </div>
+
+    <!-- Экран рейтинга -->
+    <div id="ratingScreen" class="screen center-screen" style="display: none;">
+        <div class="panel-card">
+            <h2>🏆 Топ-10 игроков</h2>
+            <div class="rating-list" id="ratingList"></div>
+            <button class="btn btn-ghost btn-block" onclick="showScreen('authScreen')">Назад</button>
+        </div>
+    </div>
+
+    <!-- Тост уведомлений -->
+    <div class="achievement-toast-container" id="achievementToast"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
